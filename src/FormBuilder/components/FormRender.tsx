@@ -1,5 +1,5 @@
 import { useFormBuilder } from "../../store/useFormBuilder";
-import { useSubmitForm } from "../api/formquery";
+import { useSubmitForm } from "../hooks/formquery";
 import FieldRenderer from "./FieldRender";
 
 export default function DynamicForm() {
