@@ -20,6 +20,7 @@ export default function FieldBox({
   const setCurrentRow = useFormBuilder((s) => s.setCurrentEditingRowIndex);
   const editField = useFormBuilder((s) => s.editField);
   const deleteField = useFormBuilder((s) => s.deleteField);
+  const ondragEnd = useFormBuilder((s) => s.ondragEnd);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fieldData, setFieldData] = useState<Field>(col_values.field);
@@ -38,8 +39,72 @@ export default function FieldBox({
     setIsModalOpen(false);
   };
 
+  function dragstartHandler(
+    e: React.DragEvent<HTMLDivElement>,
+    row_index: number,
+    col_index: number
+  ) {
+    const payload = { fromRow: row_index, fromCol: col_index };
+    console.log("payload : ", payload);
+    try {
+      e.dataTransfer.setData("application/json", JSON.stringify(payload));
+    } catch (err) {
+      e.dataTransfer.setData("text/plain", JSON.stringify(payload));
+    }
+    try {
+      e.dataTransfer.effectAllowed = "move";
+    } catch (err) {}
+  }
+  function dragoverHandler(ev: React.DragEvent<HTMLDivElement>) {
+    ev.preventDefault();
+  }
+
+  function dropHandler(
+    e: React.DragEvent<HTMLDivElement>,
+    to_row_index: number,
+    to_col_index: number
+  ) {
+    e.preventDefault();
+
+    let raw = "";
+    try {
+      raw = e.dataTransfer.getData("application/json");
+    } catch {}
+
+    if (!raw) {
+      try {
+        raw = e.dataTransfer.getData("text/plain");
+      } catch {}
+    }
+
+    if (!raw) return;
+
+    let payload: { fromRow: number; fromCol: number } | null = null;
+
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    if (!payload) return;
+
+    const { fromRow, fromCol } = payload;
+
+    console.log("DROP FROM:", fromRow, fromCol);
+    console.log("DROP TO:", to_row_index, to_col_index);
+
+    ondragEnd(fromRow, fromCol, to_row_index, to_col_index);
+  }
+
   return (
-    <div className="border rounded p-2 flex flex-col gap-2 group bg-gray-50">
+    <div
+      className="border rounded p-2 flex flex-col gap-2 group bg-gray-50"
+      draggable="true"
+      onDragStart={(e) => dragstartHandler(e, row_index, col_index)}
+      onDragOver={dragoverHandler}
+      onDrop={(e) => dropHandler(e, row_index, col_index)}
+    >
       <div className="flex justify-between items-center">
         <div>
           <h4 className="font-semibold">
